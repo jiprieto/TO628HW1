@@ -1,10 +1,10 @@
 ---
 title: "Homework Assignment 1"
-author: "Your Name Here"
+author: "Ignacio Prieto"
 date: 'Assigned: Oct 24, 2020, Due Sun Nov 01, 2020 11:59PM'
 output:
-  pdf_document: default
   html_document: default
+  code_folding: hide
 ---
 
 ## HW-1 Instructions
@@ -38,29 +38,87 @@ First - make sure that you are reading the data correctly and doing all the data
 
 I now would like you to answer the following - all in their own separate R code blocks.
 
+
+```{r Data Loading, collapse=TRUE, echo=FALSE}
+library(dplyr)
+library(ggplot2)
+# set working directory
+setwd("G:/My Drive/Cursos/2020 Fall A/TO 628 Analytics/07. HW/TO628HW1")
+
+# read in data and examine structure
+nyc <- read.csv("nycflights.csv")
+#str(nyc)
+#summary(nyc)
+
+# Deleting the column X
+nyc$X <- NULL
+
+# Factorize columns that need to be a factor
+nyc$origin <- as.factor(nyc$origin)
+nyc$tailnum <- as.factor(nyc$tailnum)
+nyc$month <- as.factor(nyc$month)
+nyc$dest <- as.factor(nyc$dest)
+nyc$carrier <- as.factor(nyc$carrier)
+nyc$flight <- as.factor(nyc$flight)
+
+# Re-check my data
+#str(nyc)
+#summary(nyc)
+
+
+```
+
 ### Data Exploration
 
 Let's first do some simple exploration of this data. 
 
-- How many airlines are there? (Hint: `levels` and `length` can be useful here)
+```{r Data_Exploration, collapse=TRUE, echo=FALSE}
+nairlines <- length(levels(nyc$carrier))
+numflightsoo <- nrow(nyc[nyc$carrier=="OO",])
+shortestnyc <- min(nyc[,"air_time"],na.rm=TRUE)
+nflightsua <- nrow(nyc[nyc$carrier=="UA" & nyc$year==2013 & nyc$month==1 & nyc$day==12,])
 
-- How many flights there were by the airline with code `OO`? (Hint: `nrow` can be useful here along with logical indexing)
 
-- How long is the shortest flight out of any NYC airport? (Hint: `min` can be useful, remember to handle `NA` values)
+```
 
-- How many flights where there by United Airlines (code: UA) on Jan 12th 2013?
+**- How many airlines are there? (Hint: `levels` and `length` can be useful here)**
 
+There are `r nairlines` airlines.
+
+**- How many flights there were by the airline with code `OO`? (Hint: `nrow` can be useful here along with logical indexing)**
+
+There were `r numflightsoo` flights by airline OO.
+
+**- How long is the shortest flight out of any NYC airport? (Hint: `min` can be useful, remember to handle `NA` values)**
+
+The shortest flight was `r shortestnyc` minutes.
+
+**- How many flights where there by United Airlines (code: UA) on Jan 12th 2013?**
+
+There were `r nflightsua` flights from United Airlines.
 
 ### Arrival Delay
+```{r Arrival_Delay, collapse=TRUE, echo=FALSE, fig.show='hide'}
+average_delay <-  mean(nyc$arr_delay[nyc$year==2013 & nyc$month ==1],trim=0, na.rm = TRUE)
+median_delay <-  median(nyc$arr_delay[nyc$year==2013 & nyc$month ==1],na.rm = TRUE)
+plot1 <- hist(nyc$arr_delay[nyc$year==2013 & nyc$month ==1], breaks = 200, xlim = c(-50,200), main="Distribution of delays", xlab="Minutes", ylab="Number of flights"  )
+```
 
 Lets focus on Arrival Delay.
 
-- What was the average arrival delay for all airports and all airlines combined in Jan 2013? 
+**- What was the average arrival delay for all airports and all airlines combined in Jan 2013?** 
 
-- Whats was the median arrival delay for all airports and all airlines combined in Jan 2013?
+The average arrival delay was `r average_delay` minutes in Jan 2013.
 
-Based on your answers to the two questions above, what can you say about the distribution of arrival delays? Provide your answer in a text paragraph form.
+**- Whats was the median arrival delay for all airports and all airlines combined in Jan 2013?**
 
+The median arrival delay was `r median_delay` minutes in Jan 2013.
+
+**Based on your answers to the two questions above, what can you say about the distribution of arrival delays? Provide your answer in a text paragraph form.**
+
+
+
+![In the histogram, we can see that most values are between -50 and 0, but the right tail is much more longer so that skews the mean to be positive while the median is negative.](`r knitr::fig_chunk('Arrival_Delay', 'png')`)
 
 ### Airline Performance
 
