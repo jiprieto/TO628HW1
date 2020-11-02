@@ -122,25 +122,75 @@ The median arrival delay was `r median_delay` minutes in Jan 2013.
 
 ### Airline Performance
 
+```{r AirlinePerformance, collapse=TRUE, echo=FALSE, fig.show='hide'}
+library(knitr)
+
+#Delays by airline
+arrdelay_by_airline <- tapply(nyc$arr_delay, nyc$carrier, mean, na.rm = TRUE)
+dls <- data.frame(names(arrdelay_by_airline), arrdelay_by_airline)
+#tabla <- print.data.frame(dls)
+plotairline <- barplot(arrdelay_by_airline)
+
+# which airline has the maximum delay
+highest_delay <- max(arrdelay_by_airline)
+name_of_highest_delay <- names(arrdelay_by_airline[arrdelay_by_airline == max(arrdelay_by_airline)])
+
+# which airline has the smallest average delay
+smallest_delay <- min(arrdelay_by_airline)
+name_of_smallest_delay <- names(arrdelay_by_airline[arrdelay_by_airline == min(arrdelay_by_airline)])
+
+# airlines that have negavite delays
+negatives <- names(arrdelay_by_airline[arrdelay_by_airline <0])
+
+#the airlines with negative delays are `r negatives`
+```
+
 Lets see if all airlines are equally terrible as far as flight arrival delays are concerned. For this question you will have to make sure that airline column is coded as a factor.
 
-- Calculate average arrival delays by airline (Hint: look up the command `tapply`)
+**- Calculate average arrival delays by airline (Hint: look up the command `tapply`)**
 
-- Draw a Bar Plot of Average Arrival Delays for all the Airlines (Hint: command for making a Bar Plot is simply `barplot`)
+Average delays by airline:
+`r kable(arrdelay_by_airline)`
 
-- Which airline has the highest average arrival delay? Which airline has the smallest average arrival delay? Are there airlines that actually have negative average delay? Provide answer to this question in a text paragraph form using **inline R code**.
+**- Draw a Bar Plot of Average Arrival Delays for all the Airlines (Hint: command for making a Bar Plot is simply `barplot`)**
+![Delays by airline.](`r knitr::fig_chunk('AirlinePerformance', 'png')`)
+
+**- Which airline has the highest average arrival delay?**
+
+The airline with the highest average delay is `r name_of_highest_delay`. 
+
+
+**Which airline has the smallest average arrival delay?** 
+
+The airline with the smallest average delay is `r name_of_smallest_delay`. 
+
+**Are there airlines that actually have negative average delay?Provide answer to this question in a text paragraph form using inline R code.**
+
+Yes, the airlines that have negative average delay are `r negatives[1]` and `r negatives[2]`. 
+
+
 
 ### Air Gain
-
 Create a new column named airgain such that airgain = (departure delay - arrival delay) : this is the amount of delay a flight made up while in air.
 
-a) Explore airgain data - calculate suitable descriptive statistics and appropriate graphics to better understand this data. This part is open ended - you do what you feel works best for you.
+```{r AirGain, collapse=TRUE, echo=FALSE, fig.show='hide'}
+nyc$airgain <- nyc$dep_delay - nyc$arr_delay
+hist(nyc$airgain, breaks = 100, xlim = c(-50,50) )
 
-b) Answer the questions:
+airgain_by_airline <- tapply(nyc$airgain, nyc$carrier, mean, na.rm = TRUE)
 
-  - do airlines actually gain any time when in air on average? 
+plotgain <- barplot(airgain_by_airline)
+```
+**a) Explore airgain data - calculate suitable descriptive statistics and appropriate graphics to better understand this data. This part is open ended - you do what you feel works best for you.**
 
-  - Calculate average airgain for different airlines - which airlines do a better job, which do a worse job? 
+![Airgains by airline](`r knitr::fig_chunk('AirGain', 'png')`)
+
+**b) Answer the questions:**
+**- do airlines actually gain any time when in air on average?** 
+**- Calculate average airgain for different airlines - which airlines do a better job, which do a worse job?**
+  
+Average AirGain by airline:
+`r kable(airgain_by_airline)`
 
 ### Merging Data Frames
 
@@ -152,7 +202,67 @@ a) Read the `planes.csv` file using `read.csv` command. Do any data cleaning nec
 
 b) Merge the flights data and the planes data using the `merge` command. You should do the merge on the common column named `tailnum`. *getting this right may need some trial and error and getting some help*.
 
-c) Now that you have a merged dataset, think of what interesting questions that you can ask that can be answered using the merged dataset. You are asked to pose five interesting questions and answer them. (For example: who are the top 10 manufacturers of planes that fly out of NYC airports?) **Be creative. Be bold. Ask questions that you would want to know answers to even if you were not doing this for a HW. **
+
+
+```{r PlanesInfo, collapse=TRUE, echo=FALSE, fig.show='hide'}
+# merging data frames
+planes <- read.csv("planes.csv")
+#str(planes)
+#summary(planes)
+
+# deleting the column x
+planes$x <- NULL 
+# factorize columns that need to be a factor
+planes$manufacturer <- as.factor(planes$manufacturer)
+planes$model<- as.factor(planes$model)
+planes$engine<- as.factor(planes$engine)
+planes$type<- as.factor(planes$type)
+planes$tailnum<- as.factor(planes$tailnum)
+
+#summary(planes)
+#summary(nyc)
+total <- merge(nyc,planes,by="tailnum")
+#summary(total)
+```
+
+
+
+
+**c) Now that you have a merged dataset, think of what interesting questions that you can ask that can be answered using the merged dataset. You are asked to pose five interesting questions and answer them. (For example: who are the top 10 manufacturers of planes that fly out of NYC airports?) Be creative. Be bold. Ask questions that you would want to know answers to even if you were not doing this for a HW. **
+
+
+**1) What is the performance between 737 and Airbus A320**
+```{r Airbus737, collapse=TRUE, echo=FALSE, fig.show='hide'}
+library(dplyr)
+library(stringr)
+
+data737 <- filter(total,str_detect(total$model,"737"))
+time737 <- mean(data737$air_time, trim=0, na.rm = TRUE)
+gain737 <- mean(data737$airgain, trim=0, na.rm = TRUE)
+data320 <- filter(total,str_detect(total$model,"A320"))
+time320 <- mean(data320$air_time, trim=0, na.rm = TRUE)
+gain320<- mean(data320$airgain, trim=0, na.rm = TRUE)
+result737 <- gain737/time737
+result320 <- gain320/time320
+```
+
+The average percentage gain for 737 is `r result737`, while for 320 is `r result320`.   
+
+
+```{r Destination, collapse=TRUE, echo=FALSE, fig.show='hide'}
+#dest <- total[total$seats>4 && total$seats <15]
+```
+**2) What is the longest route?**
+
+```{r Route, collapse=TRUE, echo=FALSE, fig.show='hide'}
+#maxtime <- nyc[nyc$air_time==max(nyc$air_time),]
+```
+3) What are the routes that have the biggest airgain
+4) Are 4 motors more likely to have airgain than 2 motor?
+
+5) what are the preferred destination airports for Learjet on weekends?
+
+
 
 ### Making Your HTML Look Nice
 
